@@ -1,0 +1,33 @@
+services:
+  ton:
+    restart: unless-stopped
+    image: forked/bitcart-ton:0.10.3.0
+    # the image only exists locally: build it from ./daemon, never try to pull it (./update.sh runs compose pull)
+    pull_policy: build
+    build:
+      context: ./plugins/docker/ton/daemon
+    environment:
+      TON_NETWORK: ${TON_NETWORK:-mainnet}
+      TON_SERVER: ${TON_SERVER:-https://toncenter.com/api/v3}
+      TON_DEBUG: ${TON_DEBUG:-false}
+    expose:
+      - "5013"
+    volumes:
+      - "ton_datadir:/data"
+
+  backend:
+    environment:
+      TON_HOST: ton
+      TON_NETWORK: ${TON_NETWORK:-mainnet}
+    depends_on:
+      - ton
+    links:
+      - ton
+
+  worker:
+    environment:
+      TON_HOST: ton
+      TON_NETWORK: ${TON_NETWORK:-mainnet}
+
+volumes:
+  ton_datadir:
